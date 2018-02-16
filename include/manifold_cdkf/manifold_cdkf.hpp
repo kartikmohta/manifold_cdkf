@@ -211,7 +211,7 @@ class ManifoldCDKF
   StateCov state_cov_;
 
   /// Process model
-  ProcessModel process_model_;
+  ProcessModel const process_model_;
 
   /// State time (last process update time)
   ros::Time prev_proc_update_time_;
@@ -354,6 +354,8 @@ ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   }
 
   auto const Pzz_chol = Pzz.llt();
+  if(Pzz_chol.info() != Eigen::Success)
+    throw std::domain_error("Pzz is not positive definite!");
 
   TangentVec const dx = Pxz * Pzz_chol.solve(inno);
 
