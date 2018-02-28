@@ -23,19 +23,27 @@ class ManifoldCDKF
 
   ManifoldCDKF(State const &state, StateCov const &state_covariance,
                ProcessModel const &process_model)
-      : state_{state}, state_cov_{state_covariance}, process_model_{process_model}
+      : state_{state},
+        state_cov_{state_covariance},
+        process_model_{process_model}
   {
     if(!process_model_)
       throw std::invalid_argument("Invalid process_model");
   }
 
+  /// Get current state
   State getState() const { return state_; }
+  /// Set current state
   void setState(State const &state) { state_ = state; }
 
+  /// Get current state covariance
   StateCov getStateCovariance() const { return state_cov_; }
+  /// Set current state covariance
   void setStateCovariance(StateCov const &cov) { state_cov_ = cov; }
 
+  /// Get the current state timestamp
   ros::Time getStateTime() const { return prev_proc_update_time_; }
+  /// Set the current state timestamp
   void setStateTime(ros::Time const &time) { prev_proc_update_time_ = time; }
 
   /**
@@ -65,10 +73,11 @@ class ManifoldCDKF
    *
    * @return True if the measurement update was successful else false
    */
-  template <typename InputCov>
-  std::enable_if_t<InputCov::RowsAtCompileTime != Eigen::Dynamic, bool>
-  processUpdate(ros::Time const &time, Input const &u, InputCov const &Q,
-                bool debug = false);
+  template <typename InputCov,
+            typename =
+                std::enable_if_t<InputCov::SizeAtCompileTime != Eigen::Dynamic>>
+  bool processUpdate(ros::Time const &time, Input const &u, InputCov const &Q,
+                     bool debug = false);
 
   /**
    * Run the measurement update using the provided measurement model , current
@@ -82,12 +91,13 @@ class ManifoldCDKF
    *
    * @return True if the measurement update was successful else false
    */
-  template <typename MeasurementFunc, typename MeasurementType,
-            typename MeasCovType>
-  std::enable_if_t<MeasCovType::RowsAtCompileTime != Eigen::Dynamic, bool>
-  measurementUpdate(MeasurementFunc const &measurement_func,
-                    MeasurementType const &z, MeasCovType const &R,
-                    bool debug = false);
+  template <
+      typename MeasurementFunc, typename MeasurementType, typename MeasCovType,
+      typename =
+          std::enable_if_t<MeasCovType::SizeAtCompileTime != Eigen::Dynamic>>
+  bool measurementUpdate(MeasurementFunc const &measurement_func,
+                         MeasurementType const &z, MeasCovType const &R,
+                         bool debug = false);
 
   // TODO(Kartik): Add a MeasurementUpdateLinear function
 
@@ -137,15 +147,15 @@ class ManifoldCDKF
     return Xaa;
   }
 
-/**
- * Compute the mean of the sigma points
- *
- * @param[in] sigma_points Input sigma points
- * @param[in] wm0 Weight wm0 for CDKF
- * @param[in] wm1 Weight wm1 for CDKF
- *
- * @return Mean of the sigma points
- */
+  /**
+   * Compute the mean of the sigma points
+   *
+   * @param[in] sigma_points Input sigma points
+   * @param[in] wm0 Weight wm0 for CDKF
+   * @param[in] wm1 Weight wm1 for CDKF
+   *
+   * @return Mean of the sigma points
+   */
   template <typename T, size_t N>
   T meanOfSigmaPoints(std::array<T, N> const &sigma_points, Scalar wm0,
                       Scalar wm1)
@@ -230,12 +240,9 @@ class ManifoldCDKF
 };
 
 template <typename State, typename Input, typename ProcNoiseVec>
-template <typename InputCov>
-std::enable_if_t<InputCov::RowsAtCompileTime != Eigen::Dynamic, bool>
-ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(ros::Time const &time,
-                                                        Input const &u,
-                                                        InputCov const &Q,
-                                                        bool debug)
+template <typename InputCov, typename>
+bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(
+    ros::Time const &time, Input const &u, InputCov const &Q, bool debug)
 {
   // Init Time
   if(!init_process_)
@@ -294,16 +301,15 @@ ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(ros::Time const &time,
 
 template <typename State, typename Input, typename ProcessNoiseVec>
 template <typename MeasurementFunc, typename MeasurementType,
-          typename MeasCovType>
-std::enable_if_t<MeasCovType::RowsAtCompileTime != Eigen::Dynamic, bool>
-ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
+          typename MeasCovType, typename>
+bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
     MeasurementFunc const &measurement_func, MeasurementType const &z,
     MeasCovType const &R, bool debug)
 {
   constexpr unsigned int L = state_count_;
 
   // Generate sigma points
-  Mat<L, 2 *L + 1> const X = generateSigmaPoints(state_cov_);
+  Mat<L, 2 * L + 1> const X = generateSigmaPoints(state_cov_);
   auto const[wm0, wm1, wc1, wc2] = generateWeights(L);
 
   if(debug)
