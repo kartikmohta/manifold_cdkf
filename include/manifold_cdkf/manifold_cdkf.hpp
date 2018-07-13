@@ -2,7 +2,7 @@
 
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
-#include <ros/time.h>
+#include <iostream>
 
 template <typename State, typename Input, typename ProcessNoiseVec>
 class ManifoldCDKF
@@ -19,7 +19,7 @@ class ManifoldCDKF
   using StateCov = Mat<State::tangent_dim_, State::tangent_dim_>;
 
   using ProcessModel = std::function<State(
-      State const &state, Input const &u, ProcessNoiseVec const &w, double dt)>;
+      State const &state, Input const &u, ProcessNoiseVec const &w, Scalar dt)>;
 
   ManifoldCDKF(State const &state, StateCov const &state_covariance,
                ProcessModel const &process_model)
@@ -40,11 +40,6 @@ class ManifoldCDKF
   StateCov getStateCovariance() const { return state_cov_; }
   /// Set current state covariance
   void setStateCovariance(StateCov const &cov) { state_cov_ = cov; }
-
-  /// Get the current state timestamp
-  ros::Time getStateTime() const { return prev_proc_update_time_; }
-  /// Set the current state timestamp
-  void setStateTime(ros::Time const &time) { prev_proc_update_time_ = time; }
 
   /**
    * Set the CDKF sigma point spread parameter. The sigma points are generated
@@ -76,7 +71,7 @@ class ManifoldCDKF
   template <typename InputCov,
             typename =
                 std::enable_if_t<InputCov::SizeAtCompileTime != Eigen::Dynamic>>
-  bool processUpdate(ros::Time const &time, Input const &u, InputCov const &Q,
+  bool processUpdate(Scalar const dt, Input const &u, InputCov const &Q,
                      bool debug = false);
 
   /**
@@ -223,12 +218,6 @@ class ManifoldCDKF
   /// Process model
   ProcessModel const process_model_;
 
-  /// State time (last process update time)
-  ros::Time prev_proc_update_time_;
-
-  /// Process update initialized indicator
-  bool init_process_ = false;
-
   /// CDKF Parameter
   Scalar h_ = std::sqrt(Scalar(3));
 
@@ -241,20 +230,11 @@ class ManifoldCDKF
 
 template <typename State, typename Input, typename ProcNoiseVec>
 template <typename InputCov, typename>
-bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(
-    ros::Time const &time, Input const &u, InputCov const &Q, bool debug)
+bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
+                                                             Input const &u,
+                                                             InputCov const &Q,
+                                                             bool debug)
 {
-  // Init Time
-  if(!init_process_)
-  {
-    prev_proc_update_time_ = time;
-    init_process_ = true;
-    return false;
-  }
-
-  double dt = (time - prev_proc_update_time_).toSec();
-  prev_proc_update_time_ = time;
-
   if(dt < 0)
     return false;
 
@@ -270,7 +250,7 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(
   // Generate sigma points
   auto const X = generateSigmaPoints(state_cov_);
   auto const W = generateSigmaPoints(Q);
-  auto const[wm0, wm1, wc1, wc2] = generateWeights(L);
+  auto const [wm0, wm1, wc1, wc2] = generateWeights(L);
 
   std::array<State, 2 * L + 1> Xa;
 
@@ -310,7 +290,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
 
   // Generate sigma points
   Mat<L, 2 * L + 1> const X = generateSigmaPoints(state_cov_);
-  auto const[wm0, wm1, wc1, wc2] = generateWeights(L);
+  auto const [wm0, wm1, wc1, wc2] = generateWeights(L);
 
   if(debug)
   {

@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "manifold_cdkf/element_types/pose.hpp"
 #include "manifold_cdkf/element_types/pose_vel.hpp"
 #include "manifold_cdkf/manifold_cdkf.hpp"
@@ -34,14 +36,13 @@ int main(int argc, char *argv[])
   std::cout << cdkf.getState() << "\n";
 
   // Apply a few process updates (predictions)
-  auto const t_now = ros::Time(0);
   auto const Q = (0.25 * Mat<3, 3>::Identity()).eval();
 
-  if(cdkf.processUpdate(t_now, Vec<0>{}, Q))
+  if(cdkf.processUpdate(0.1, Vec<0>{}, Q))
     std::cout << cdkf.getState() << "\n";
-  if(cdkf.processUpdate(t_now + ros::Duration{0.1}, Vec<0>{}, Q))
+  if(cdkf.processUpdate(0.1, Vec<0>{}, Q))
     std::cout << cdkf.getState() << "\n";
-  if(cdkf.processUpdate(t_now + ros::Duration{0.1}, Vec<0>{}, Q))
+  if(cdkf.processUpdate(0.1, Vec<0>{}, Q))
     std::cout << cdkf.getState() << "\n";
 
   // Measurement update
