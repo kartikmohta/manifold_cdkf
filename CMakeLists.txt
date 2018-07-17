@@ -6,7 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
 
+option(BUILD_EXAMPLES "Build the examples." ON)
+option(BUILD_TESTS "Build the tests." OFF)
+
 find_package(Eigen3 REQUIRED)
+
+###########
+## Build ##
+###########
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE
@@ -14,8 +21,14 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
 target_compile_options(${PROJECT_NAME} INTERFACE "-std=c++17")
 
-add_executable(pose_vel_example src/pose_vel_example.cpp)
-target_link_libraries(pose_vel_example Eigen3::Eigen ${PROJECT_NAME})
+if(BUILD_EXAMPLES)
+  add_executable(pose_vel_example src/pose_vel_example.cpp)
+  target_link_libraries(pose_vel_example Eigen3::Eigen ${PROJECT_NAME})
+endif()
+
+#############
+## Install ##
+#############
 
 install(TARGETS ${PROJECT_NAME} EXPORT "${PROJECT_NAME}Targets"
   LIBRARY DESTINATION "lib"
@@ -38,3 +51,16 @@ generate_and_install_config_file(
   DEPS_INCLUDE_DIRS EIGEN3
   DEPS_LIBRARIES
   )
+
+#############
+## Testing ##
+#############
+
+if(BUILD_TESTS)
+  add_executable(test_unit_vector_3d tests/test_unit_vector_3d.cpp)
+  target_include_directories(test_unit_vector_3d PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+  target_link_libraries(test_unit_vector_3d Eigen3::Eigen)
+  enable_testing()
+  add_test(UnitVector3D test_unit_vector_3d)
+endif()
