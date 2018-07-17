@@ -349,14 +349,39 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
     std::cout << "inno: " << inno.transpose() << "\n";
   }
 
-  auto const Pzz_chol = Pzz.llt();
-  if(Pzz_chol.info() != Eigen::Success)
-    throw std::domain_error("Pzz is not positive definite!");
+  auto dx = State::TangentVec::Zero().eval();
 
-  auto const dx = (Pxz * Pzz_chol.solve(inno)).eval();
+  auto const Pzz_llt = Pzz.llt();
+  if(Pzz_llt.info() == Eigen::Success) // Pzz is positive-definite
+  {
+    dx = Pxz * Pzz_llt.solve(inno);
+    // Covariance around the old mean
+    state_cov_ -= Pxz * Pzz_llt.solve(Pxz.transpose());
+  }
+  else
+  {
+    // Pzz is not positive definite, try LDLT
+    auto const Pzz_ldlt = Pzz.ldlt();
+    if(Pzz_ldlt.info() == Eigen::Success) // Pzz is positive semi-definite
+    {
+      dx = Pxz * Pzz_ldlt.solve(inno);
+      // Covariance around the old mean
+      state_cov_ -= Pxz * Pzz_ldlt.solve(Pxz.transpose());
+    }
+  }
 
-  // Covariance around the old mean
-  state_cov_ -= Pxz * Pzz_chol.solve(Pxz.transpose());
+  // Make sure that diagonal elements of state_cov_ are non-negative
+  for(unsigned int i = 0; i < State::tangent_dim_; ++i)
+  {
+    if(state_cov_(i, i) < 0)
+    {
+      for(unsigned int j = 0; j < State::tangent_dim_; ++j)
+      {
+        state_cov_(i, j) = 0;
+        state_cov_(j, i) = 0;
+      }
+    }
+  }
 
   if(debug)
   {
