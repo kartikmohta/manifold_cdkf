@@ -99,9 +99,6 @@ class ManifoldCDKF
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
-  using TangentVec = typename State::TangentVec;
-
-  static constexpr unsigned int state_count_ = State::tangent_dim_;
 
   /**
    * Generate weights for the CDKF equations
@@ -133,12 +130,12 @@ class ManifoldCDKF
     constexpr int L = T::RowsAtCompileTime;
 
     // Matrix square root
-    Mat<L, L> const sqrtP = matrixSquareRoot(P);
+    auto const sqrtP = matrixSquareRoot(P);
 
     Mat<L, 2 * L + 1> Xaa;
     Xaa.col(0).setZero();
-    Xaa.template block<L, L>(0, 1).noalias() = h_ * sqrtP;
-    Xaa.template block<L, L>(0, L + 1).noalias() = -h_ * sqrtP;
+    Xaa.template block<L, L>(0, 1) = h_ * sqrtP;
+    Xaa.template block<L, L>(0, L + 1) = -h_ * sqrtP;
     return Xaa;
   }
 
@@ -239,10 +236,12 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
     return false;
 
   constexpr unsigned int proc_noise_count = InputCov::RowsAtCompileTime;
-  constexpr unsigned int L = state_count_ + proc_noise_count;
+  constexpr unsigned int L = State::tangent_dim_ + proc_noise_count;
 
   if(debug) // For debugging
   {
+    std::cout << std::string(32, '=') << " Process Update "
+              << std::string(32, '=') << "\n";
     std::cout << "State:\n" << state_ << std::endl;
     std::cout << "state_cov:\n" << state_cov_ << std::endl;
   }
@@ -255,13 +254,13 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
   std::array<State, 2 * L + 1> Xa;
 
   // Apply process model
-  for(unsigned int k = 0; k <= 2 * state_count_; ++k)
+  for(unsigned int k = 0; k <= 2 * State::tangent_dim_; ++k)
   {
     Xa[k] = process_model_(state_ + X.col(k), u, W.col(0), dt);
   }
   for(unsigned int k = 1; k <= 2 * proc_noise_count; ++k)
   {
-    Xa[2 * state_count_ + k] = process_model_(state_, u, W.col(k), dt);
+    Xa[2 * State::tangent_dim_ + k] = process_model_(state_, u, W.col(k), dt);
   }
 
   state_ = meanOfSigmaPoints(Xa, wm0, wm1);
@@ -272,10 +271,16 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
   {
     auto const x1 = Xa[k] - state_;
     auto const x2 = Xa[L + k] - state_;
-    TangentVec const d1 = x1 - x2;
-    TangentVec const d2 = x1 + x2;
+    auto const d1 = x1 - x2;
+    auto const d2 = x1 + x2;
     state_cov_ += wc1 * d1 * d1.transpose() + wc2 * d2 * d2.transpose();
   }
+
+  if(debug)
+  {
+    std::cout << std::string(80, '=') << "\n";
+  }
+
   return true;
 }
 
@@ -286,10 +291,16 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
     MeasurementFunc const &measurement_func, MeasurementType const &z,
     MeasCovType const &R, bool debug)
 {
-  constexpr unsigned int L = state_count_;
+  if(debug)
+  {
+    std::cout << std::string(30, '=') << " Measurement Update "
+              << std::string(30, '=') << "\n";
+  }
+
+  constexpr unsigned int L = State::tangent_dim_;
 
   // Generate sigma points
-  Mat<L, 2 * L + 1> const X = generateSigmaPoints(state_cov_);
+  auto const X = generateSigmaPoints(state_cov_);
   auto const [wm0, wm1, wc1, wc2] = generateWeights(L);
 
   if(debug)
@@ -310,15 +321,15 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   auto const z_pred = meanOfSigmaPoints(Zaa, wm0, wm1);
 
   // Covariance
-  MeasCovType Pzz = MeasCovType::Zero();
-  Mat<state_count_, MeasurementType::tangent_dim_> Pxz =
-      Mat<state_count_, MeasurementType::tangent_dim_>::Zero();
+  auto Pzz = MeasCovType::Zero().eval();
+  auto Pxz =
+      Mat<State::tangent_dim_, MeasurementType::tangent_dim_>::Zero().eval();
   for(unsigned int k = 1; k <= L; k++)
   {
     auto const z1 = Zaa[k] - z_pred;
     auto const z2 = Zaa[L + k] - z_pred;
-    Vec<MeasurementType::tangent_dim_> const dz1 = z1 - z2;
-    Vec<MeasurementType::tangent_dim_> const dz2 = z1 + z2;
+    auto const dz1 = z1 - z2;
+    auto const dz2 = z1 + z2;
     Pzz += wc1 * dz1 * dz1.transpose() + wc2 * dz2 * dz2.transpose();
     Pxz += wm1 * X.col(k) * dz1.transpose();
   }
@@ -333,8 +344,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
     std::cout << "Pxz:\n" << Pxz << "\n";
     std::cout << "Pzz:\n" << Pzz << "\n";
     // Kalman Gain;
-    Mat<state_count_, MeasurementType::tangent_dim_> const K =
-        Pxz * Pzz.inverse();
+    auto const K = Pxz * Pzz.inverse();
     std::cout << "K:\n" << K << "\n";
     std::cout << "inno: " << inno.transpose() << "\n";
   }
@@ -343,7 +353,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   if(Pzz_chol.info() != Eigen::Success)
     throw std::domain_error("Pzz is not positive definite!");
 
-  TangentVec const dx = Pxz * Pzz_chol.solve(inno);
+  auto const dx = (Pxz * Pzz_chol.solve(inno)).eval();
 
   // Covariance around the old mean
   state_cov_ -= Pxz * Pzz_chol.solve(Pxz.transpose());
@@ -355,7 +365,11 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   }
 
   // Compute the mean and move the covariance to be around the new mean
-  Mat<L, 2 * L + 1> const X_new = generateSigmaPoints(state_cov_);
+  auto const X_new = generateSigmaPoints(state_cov_);
+  if(debug)
+  {
+    std::cout << "X_new:\n" << X_new << "\n";
+  }
 
   std::array<State, 2 * L + 1> Xa;
   for(unsigned int k = 0; k <= 2 * L; k++)
@@ -372,9 +386,14 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   {
     auto const x1 = Xa[k] - state_;
     auto const x2 = Xa[L + k] - state_;
-    TangentVec const d1 = x1 - x2;
-    TangentVec const d2 = x1 + x2;
+    auto const d1 = x1 - x2;
+    auto const d2 = x1 + x2;
     state_cov_ += wc1 * d1 * d1.transpose() + wc2 * d2 * d2.transpose();
+  }
+
+  if(debug)
+  {
+    std::cout << std::string(80, '=') << "\n";
   }
 
   return true;
