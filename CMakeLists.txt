@@ -9,7 +9,7 @@ set(CMAKE_CXX_EXTENSIONS FALSE)
 option(BUILD_EXAMPLES "Build the examples." ON)
 option(BUILD_TESTS "Build the tests." OFF)
 
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 REQUIRED CONFIG)
 
 ###########
 ## Build ##
@@ -23,7 +23,7 @@ target_compile_options(${PROJECT_NAME} INTERFACE "-std=c++17")
 
 if(BUILD_EXAMPLES)
   add_executable(pose_vel_example src/pose_vel_example.cpp)
-  target_link_libraries(pose_vel_example Eigen3::Eigen ${PROJECT_NAME})
+  target_link_libraries(pose_vel_example ${PROJECT_NAME})
 endif()
 
 #############

@@ -13,7 +13,7 @@ function(generate_and_install_config_file)
     )
 
   foreach(dep ${config_DEPS})
-    set(PROJECT_DEPS "${PROJECT_DEPS}\nfind_dependency(${dep})")
+    set(PROJECT_DEPS "${PROJECT_DEPS}\nfind_dependency(${dep} CONFIG)")
   endforeach()
 
   foreach(dir ${config_INCLUDE_DIRS})
