@@ -19,7 +19,7 @@ class PoseVelElement final
                       QuaternionElement<Scalar>, VectorElement<Scalar, 3>>;
   using TangentVec = typename Base::TangentVec;
 
-  template <unsigned int N>
+  template <int N>
   using Vec = Eigen::Matrix<Scalar, N, 1>;
   using Quat = Eigen::Quaternion<Scalar>;
 

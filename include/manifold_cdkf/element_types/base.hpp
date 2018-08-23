@@ -2,7 +2,7 @@
 
 #include <Eigen/Core>
 
-template <typename Derived, typename Scalar, unsigned int tangent_dim>
+template <typename Derived, typename Scalar, int tangent_dim>
 class ManifoldElement
 {
  public:
