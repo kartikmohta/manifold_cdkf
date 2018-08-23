@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(manifold_cdkf VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_CXX_EXTENSIONS FALSE)
 
@@ -19,7 +19,7 @@ add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
-target_compile_options(${PROJECT_NAME} INTERFACE "-std=c++17")
+target_compile_options(${PROJECT_NAME} INTERFACE "-std=c++14")
 
 if(BUILD_EXAMPLES)
   add_executable(pose_vel_example src/pose_vel_example.cpp)

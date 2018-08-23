@@ -35,8 +35,10 @@ int main(int argc, char *argv[])
   auto const x0 =
       State{Vec<3>::Zero(), State::Quat::Identity(), Vec<3>::Zero()};
   auto const P0 = (0.1 * StateCov::Identity()).eval();
-  auto const process_model = std::function(&processModelConstantVelocity);
-  auto cdkf = ManifoldCDKF{x0, P0, process_model};
+  auto const process_model =
+      std::function<State(State const &, Vec<0> const &, Vec<3> const &,
+                          double)>(&processModelConstantVelocity);
+  auto cdkf = ManifoldCDKF<State, Vec<0>, Vec<3>>{x0, P0, process_model};
 
   std::cout << cdkf.getState() << "\n";
 

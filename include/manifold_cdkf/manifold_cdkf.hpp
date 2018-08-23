@@ -249,7 +249,10 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
   // Generate sigma points
   auto const X = generateSigmaPoints(state_cov_);
   auto const W = generateSigmaPoints(Q);
-  auto const [wm0, wm1, wc1, wc2] = generateWeights(L);
+  auto const weights = generateWeights(L);
+  auto const wm0 = weights[0], wm1 = weights[1], wc1 = weights[2],
+             wc2 = weights[3];
+  // auto const [wm0, wm1, wc1, wc2] = generateWeights(L); // In C++17
 
   std::array<State, 2 * L + 1> Xa;
 
@@ -301,7 +304,10 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
 
   // Generate sigma points
   auto const X = generateSigmaPoints(state_cov_);
-  auto const [wm0, wm1, wc1, wc2] = generateWeights(L);
+  auto const weights = generateWeights(L);
+  auto const wm0 = weights[0], wm1 = weights[1], wc1 = weights[2],
+             wc2 = weights[3];
+  // auto const [wm0, wm1, wc1, wc2] = generateWeights(L); // In C++17
 
   if(debug)
   {
