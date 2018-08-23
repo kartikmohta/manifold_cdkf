@@ -11,11 +11,8 @@
   <author email="kartikmohta@gmail.com">Kartik Mohta</author>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <buildtool_depend>catkin_simple</buildtool_depend>
 
-  <build_depend>eigen3</build_depend>
-
-  <build_export_depend>eigen3</build_export_depend>
+  <depend>eigen</depend>
 
   <export>
     <build_type>cmake</build_type>
