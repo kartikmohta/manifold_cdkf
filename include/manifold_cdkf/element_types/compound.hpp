@@ -32,8 +32,8 @@ class CompoundElement
                                templateSum(Args::tangent_dim_...)>;
   using TangentVec = typename Base::TangentVec;
 
-  CompoundElement() = default;
-  explicit CompoundElement(Args const &... vs) { t_ = std::make_tuple(vs...); }
+  CompoundElement() : t_{std::tuple<Args...>()} {}
+  explicit CompoundElement(Args const &... vs) : t_{std::make_tuple(vs...)} {}
 
   template <unsigned int N>
   typename TypeList<Args...>::template type<N>::ElementType getValue() const

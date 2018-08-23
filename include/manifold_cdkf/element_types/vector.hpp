@@ -13,7 +13,7 @@ class VectorElement final
   using Vec = Eigen::Matrix<Scalar, N, 1>;
   using ElementType = Vec;
 
-  VectorElement(const Vec &v = Vec::Zero()) { vec_ = v; }
+  VectorElement(const Vec &v = Vec::Zero()) : vec_{v} {}
 
   Vec getValue() const { return vec_; }
   void setValue(const Vec &v) { vec_ = v; }
@@ -40,4 +40,3 @@ class VectorElement final
  private:
   Vec vec_;
 };
-

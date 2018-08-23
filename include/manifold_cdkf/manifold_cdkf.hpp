@@ -107,7 +107,7 @@ class ManifoldCDKF
    *
    * @return Array containing the 4 weights, [wm0, wm1, wc1, wc2]
    */
-  std::array<Scalar, 4> generateWeights(unsigned int L)
+  std::array<Scalar, 4> generateWeights(unsigned int L) const
   {
     Scalar const h_sq = h_ * h_;
     Scalar const wm0 = (h_sq - L) / h_sq;
@@ -150,7 +150,7 @@ class ManifoldCDKF
    */
   template <typename T, size_t N>
   T meanOfSigmaPoints(std::array<T, N> const &sigma_points, Scalar wm0,
-                      Scalar wm1)
+                      Scalar wm1) const
   {
     T mean = sigma_points[0];
     unsigned int iterations = 0;
@@ -182,7 +182,7 @@ class ManifoldCDKF
    * ret^{T} = mat\f$
    */
   template <typename Derived>
-  typename Derived::PlainObject matrixSquareRoot(
+  static typename Derived::PlainObject matrixSquareRoot(
       Eigen::MatrixBase<Derived> const &mat)
   {
     // Try LLT first

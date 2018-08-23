@@ -17,7 +17,7 @@ class QuaternionElement final
   using Quat = Eigen::Quaternion<Scalar>;
   using ElementType = Quat;
 
-  QuaternionElement(const Quat &q = Quat::Identity()) { quat_ = q; }
+  QuaternionElement(const Quat &q = Quat::Identity()) : quat_{q} {}
 
   Quat getValue() const { return quat_; }
   void setValue(const Quat &q) { quat_ = q; }
@@ -48,7 +48,7 @@ class QuaternionElement final
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
-  TangentVec quat_to_vec(const Quat &q) const
+  static TangentVec quat_to_vec(const Quat &q)
   {
     const auto q_vec_norm = q.vec().norm();
     if(q_vec_norm < 10 * std::numeric_limits<Scalar>::epsilon())
@@ -57,7 +57,7 @@ class QuaternionElement final
       return 2 * std::atan2(q_vec_norm, q.w()) * q.vec() / q_vec_norm;
   }
 
-  Quat vec_to_quat(const TangentVec &vec) const
+  static Quat vec_to_quat(const TangentVec &vec)
   {
     const auto v_norm = vec.norm();
     if(v_norm < 10 * std::numeric_limits<Scalar>::epsilon())
