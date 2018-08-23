@@ -19,9 +19,8 @@ using SquareMat = Eigen::Matrix<State::Scalar_t, N, N>;
 
 using Pose = PoseElement<Scalar_t>;
 
-
-State processModelConstantVelocity(State const &x, Vec<0> const &u,
-                                   Vec<3> const &w, double dt)
+static State processModelConstantVelocity(State const &x, Vec<0> const &u,
+                                          Vec<3> const &w, double dt)
 {
   auto dx = State::TangentVec::Zero().eval();
   dx.segment<3>(0) = x.getVelocity() * dt;

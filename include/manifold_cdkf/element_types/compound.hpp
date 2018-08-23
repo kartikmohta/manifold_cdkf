@@ -90,7 +90,7 @@ class CompoundElement
 
   template <size_t i = 0, size_t segment_begin_idx = 0>
   std::enable_if_t<i < sizeof...(Args)> add(TangentVec const &diff,
-                                                CompoundElement &p) const
+                                            CompoundElement &p) const
   {
     constexpr size_t tangent_dim =
         TypeList<Args...>::template type<i>::tangent_dim_;
@@ -101,14 +101,14 @@ class CompoundElement
     add<i + 1, segment_begin_idx + tangent_dim>(diff, p);
   }
   template <size_t i = 0, size_t segment_begin_idx = 0>
-  std::enable_if_t<i >= sizeof...(Args)> add(TangentVec const &diff,
-                                             CompoundElement &p) const
+  std::enable_if_t<i >= sizeof...(Args)> add(TangentVec const &,
+                                             CompoundElement &) const
   {
   }
 
   template <size_t i = 0, size_t segment_begin_idx = 0>
   std::enable_if_t<i < sizeof...(Args)> subtract(CompoundElement const &p,
-                                                     TangentVec &diff) const
+                                                 TangentVec &diff) const
   {
     constexpr size_t tangent_dim =
         TypeList<Args...>::template type<i>::tangent_dim_;
@@ -119,8 +119,8 @@ class CompoundElement
     subtract<i + 1, segment_begin_idx + tangent_dim>(p, diff);
   }
   template <size_t i = 0, size_t segment_begin_idx = 0>
-  std::enable_if_t<i >= sizeof...(Args)> subtract(CompoundElement const &p,
-                                                  TangentVec &diff) const
+  std::enable_if_t<i >= sizeof...(Args)> subtract(CompoundElement const &,
+                                                  TangentVec &) const
   {
   }
 
@@ -131,7 +131,7 @@ class CompoundElement
     print<i + 1>(stream);
   }
   template <size_t i = 0>
-  std::enable_if_t<i >= sizeof...(Args)> print(std::ostream &stream) const
+  std::enable_if_t<i >= sizeof...(Args)> print(std::ostream &) const
   {
   }
 

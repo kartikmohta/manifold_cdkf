@@ -61,7 +61,7 @@ class ManifoldCDKF
    * Run the process update using the provided process model, input and input
    * covariance.
    *
-   * @param[in] time Timestamp for the current input
+   * @param[in] dt Time duration since last processUpdate
    * @param[in] u Input
    * @param[in] Q Input covariance
    * @param[in] debug Flag indicating whether to print internal debug messages

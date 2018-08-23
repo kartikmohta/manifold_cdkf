@@ -17,15 +17,15 @@ using Scalar_t = double;
 template <int N>
 using Vec = Eigen::Matrix<Scalar_t, N, 1>;
 
-auto const vx = Vec<3>::UnitX().eval();
-auto const vy = Vec<3>::UnitY().eval();
-auto const vz = Vec<3>::UnitZ().eval();
-auto const elem_xp = UnitVector3DElement<Scalar_t>(vx);
-auto const elem_xn = UnitVector3DElement<Scalar_t>(-vx);
-auto const elem_yp = UnitVector3DElement<Scalar_t>(vy);
-auto const elem_yn = UnitVector3DElement<Scalar_t>(-vy);
-auto const elem_zp = UnitVector3DElement<Scalar_t>(vz);
-auto const elem_zn = UnitVector3DElement<Scalar_t>(-vz);
+static auto const vx = Vec<3>::UnitX().eval();
+static auto const vy = Vec<3>::UnitY().eval();
+static auto const vz = Vec<3>::UnitZ().eval();
+static auto const elem_xp = UnitVector3DElement<Scalar_t>(vx);
+static auto const elem_xn = UnitVector3DElement<Scalar_t>(-vx);
+static auto const elem_yp = UnitVector3DElement<Scalar_t>(vy);
+static auto const elem_yn = UnitVector3DElement<Scalar_t>(-vy);
+static auto const elem_zp = UnitVector3DElement<Scalar_t>(vz);
+static auto const elem_zn = UnitVector3DElement<Scalar_t>(-vz);
 
 TEST_CASE("x + (y - x) == y")
 {
