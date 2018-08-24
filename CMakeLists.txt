@@ -18,7 +18,12 @@ find_package(Eigen3 REQUIRED CONFIG)
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
+if(TARGET Eigen3::Eigen)
+  target_link_libraries(${PROJECT_NAME} INTERFACE Eigen3::Eigen)
+else() # Older Eigen versions
+  target_include_directories(${PROJECT_NAME} SYSTEM INTERFACE
+    ${EIGEN3_INCLUDE_DIRS})
+endif()
 target_compile_options(${PROJECT_NAME} INTERFACE "-std=c++14")
 
 if(BUILD_EXAMPLES)
@@ -60,7 +65,12 @@ if(BUILD_TESTS)
   add_executable(test_unit_vector_3d tests/test_unit_vector_3d.cpp)
   target_include_directories(test_unit_vector_3d PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-  target_link_libraries(test_unit_vector_3d Eigen3::Eigen)
+  if(TARGET Eigen3::Eigen)
+    target_link_libraries(test_unit_vector_3d Eigen3::Eigen)
+  else() # Older Eigen versions
+    target_include_directories(test_unit_vector_3d SYSTEM PUBLIC
+      ${EIGEN3_INCLUDE_DIRS})
+  endif()
   enable_testing()
   add_test(UnitVector3D test_unit_vector_3d)
 endif()

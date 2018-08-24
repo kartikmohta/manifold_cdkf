@@ -1,0 +1,38 @@
+version: 2
+jobs:
+  ubuntu_16.04:
+    docker:
+      - image: ubuntu:16.04
+    steps:
+      # Ensure your image has git and ssh, otherwise the checkout step will fail
+      - run: apt-get -qq update && apt-get -qy --purge --auto-remove dist-upgrade && apt-get -qy install git openssh-client
+      - checkout
+      - run: apt-get -qy install g++ cmake libeigen3-dev # Dependencies
+      - run:
+          command: |
+            mkdir -p build
+            cd build
+            cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON -DBUILD_TESTS=ON ..
+            make
+            make test
+  ubuntu_18.04:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      # Ensure your image has git and ssh, otherwise the checkout step will fail
+      - run: apt-get -qq update && apt-get -qy --purge --auto-remove dist-upgrade && apt-get -qy install git openssh-client
+      - checkout
+      - run: apt-get -qy install g++ cmake libeigen3-dev # Dependencies
+      - run:
+          command: |
+            mkdir -p build
+            cd build
+            cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON -DBUILD_TESTS=ON ..
+            make
+            make test
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - ubuntu_16.04
+      - ubuntu_18.04
