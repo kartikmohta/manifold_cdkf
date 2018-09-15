@@ -66,7 +66,7 @@ class ManifoldCDKF
    * @param[in] Q Input covariance
    * @param[in] debug Flag indicating whether to print internal debug messages
    *
-   * @return True if the measurement update was successful else false
+   * @return True if the process update was successful else false
    */
   template <typename InputCov,
             typename =
