@@ -272,8 +272,8 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
   state_cov_.setZero();
   for(unsigned int k = 1; k <= L; ++k)
   {
-    auto const x1 = Xa[k] - state_;
-    auto const x2 = Xa[L + k] - state_;
+    auto const x1 = Xa[k] - Xa[0];
+    auto const x2 = Xa[L + k] - Xa[0];
     auto const d1 = x1 - x2;
     auto const d2 = x1 + x2;
     state_cov_ += wc1 * d1 * d1.transpose() + wc2 * d2 * d2.transpose();
@@ -332,8 +332,8 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
       Mat<State::tangent_dim_, MeasurementType::tangent_dim_>::Zero().eval();
   for(unsigned int k = 1; k <= L; k++)
   {
-    auto const z1 = Zaa[k] - z_pred;
-    auto const z2 = Zaa[L + k] - z_pred;
+    auto const z1 = Zaa[k] - Zaa[0];
+    auto const z2 = Zaa[L + k] - Zaa[0];
     auto const dz1 = z1 - z2;
     auto const dz2 = z1 + z2;
     Pzz += wc1 * dz1 * dz1.transpose() + wc2 * dz2 * dz2.transpose();
@@ -415,8 +415,8 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   state_cov_.setZero();
   for(unsigned int k = 1; k <= L; ++k)
   {
-    auto const x1 = Xa[k] - state_;
-    auto const x2 = Xa[L + k] - state_;
+    auto const x1 = Xa[k] - Xa[0];
+    auto const x2 = Xa[L + k] - Xa[0];
     auto const d1 = x1 - x2;
     auto const d2 = x1 + x2;
     state_cov_ += wc1 * d1 * d1.transpose() + wc2 * d2 * d2.transpose();
