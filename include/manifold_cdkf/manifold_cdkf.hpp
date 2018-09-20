@@ -99,7 +99,6 @@ class ManifoldCDKF
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
-
   /**
    * Generate weights for the CDKF equations
    *
@@ -117,6 +116,7 @@ class ManifoldCDKF
     return {wm0, wm1, wc1, wc2};
   }
 
+#if 0
   /**
    * Generate the sigma points given the noise covariance matrix
    *
@@ -138,6 +138,7 @@ class ManifoldCDKF
     Xaa.template block<L, L>(0, L + 1) = -h_ * sqrtP;
     return Xaa;
   }
+#endif
 
   /**
    * Compute the mean of the sigma points
@@ -235,9 +236,6 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
   if(dt < 0)
     return false;
 
-  constexpr unsigned int proc_noise_count = InputCov::RowsAtCompileTime;
-  constexpr unsigned int L = State::tangent_dim_ + proc_noise_count;
-
   if(debug) // For debugging
   {
     std::cout << std::string(32, '=') << " Process Update "
@@ -246,9 +244,12 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
     std::cout << "state_cov:\n" << state_cov_ << std::endl;
   }
 
+  constexpr unsigned int proc_noise_count = InputCov::RowsAtCompileTime;
+  constexpr unsigned int L = State::tangent_dim_ + proc_noise_count;
+
   // Generate sigma points
-  auto const X = generateSigmaPoints(state_cov_);
-  auto const W = generateSigmaPoints(Q);
+  auto const X = h_ * matrixSquareRoot(state_cov_);
+  auto const W = h_ * matrixSquareRoot(Q);
   auto const weights = generateWeights(L);
   auto const wm0 = weights[0], wm1 = weights[1], wc1 = weights[2],
              wc2 = weights[3];
@@ -257,13 +258,18 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
   std::array<State, 2 * L + 1> Xa;
 
   // Apply process model
-  for(unsigned int k = 0; k <= 2 * State::tangent_dim_; ++k)
+  Xa[0] = process_model_(state_, u, ProcNoiseVec::Zero(), dt);
+  for(unsigned int k = 1; k <= State::tangent_dim_; ++k)
   {
-    Xa[k] = process_model_(state_ + X.col(k), u, W.col(0), dt);
+    Xa[k] = process_model_(state_ + X.col(k - 1), u, ProcNoiseVec::Zero(), dt);
+    Xa[L + k] =
+        process_model_(state_ + -X.col(k - 1), u, ProcNoiseVec::Zero(), dt);
   }
-  for(unsigned int k = 1; k <= 2 * proc_noise_count; ++k)
+  for(unsigned int k = 1; k <= proc_noise_count; ++k)
   {
-    Xa[2 * State::tangent_dim_ + k] = process_model_(state_, u, W.col(k), dt);
+    Xa[State::tangent_dim_ + k] = process_model_(state_, u, W.col(k - 1), dt);
+    Xa[L + State::tangent_dim_ + k] =
+        process_model_(state_, u, -W.col(k - 1), dt);
   }
 
   state_ = meanOfSigmaPoints(Xa, wm0, wm1);
@@ -303,7 +309,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   constexpr unsigned int L = State::tangent_dim_;
 
   // Generate sigma points
-  auto const X = generateSigmaPoints(state_cov_);
+  auto const X = h_ * matrixSquareRoot(state_cov_);
   auto const weights = generateWeights(L);
   auto const wm0 = weights[0], wm1 = weights[1], wc1 = weights[2],
              wc2 = weights[3];
@@ -317,11 +323,19 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
 
   // Apply measurement model
   std::array<MeasurementType, 2 * L + 1> Zaa;
-  for(unsigned int k = 0; k <= 2 * L; k++)
+
+  Zaa[0] = measurement_func(state_);
+  for(unsigned int k = 1; k <= L; k++)
   {
-    Zaa[k] = measurement_func(state_ + X.col(k));
-    if(debug)
+    Zaa[k] = measurement_func(state_ + X.col(k - 1));
+    Zaa[L + k] = measurement_func(state_ + -X.col(k - 1));
+  }
+  if(debug)
+  {
+    for(unsigned int k = 0; k < 2 * L + 1; ++k)
+    {
       std::cout << "Z[" << k << "]:\n" << Zaa[k] << std::endl;
+    }
   }
 
   auto const z_pred = meanOfSigmaPoints(Zaa, wm0, wm1);
@@ -337,7 +351,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
     auto const dz1 = z1 - z2;
     auto const dz2 = z1 + z2;
     Pzz += wc1 * dz1 * dz1.transpose() + wc2 * dz2 * dz2.transpose();
-    Pxz += wm1 * X.col(k) * dz1.transpose();
+    Pxz += wm1 * X.col(k - 1) * dz1.transpose();
   }
   Pzz += R;
 
@@ -396,16 +410,18 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   }
 
   // Compute the mean and move the covariance to be around the new mean
-  auto const X_new = generateSigmaPoints(state_cov_);
+  auto const X_new = h_ * matrixSquareRoot(state_cov_);
   if(debug)
   {
     std::cout << "X_new:\n" << X_new << "\n";
   }
 
   std::array<State, 2 * L + 1> Xa;
-  for(unsigned int k = 0; k <= 2 * L; k++)
+  Xa[0] = state_ + dx;
+  for(unsigned int k = 1; k <= L; k++)
   {
-    Xa[k] = state_ + (dx + X_new.col(k));
+    Xa[k] = state_ + (dx + X_new.col(k - 1));
+    Xa[L + k] = state_ + (dx - X_new.col(k - 1));
   }
 
   // Get mean
