@@ -248,8 +248,8 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
   constexpr unsigned int L = State::tangent_dim_ + proc_noise_count;
 
   // Generate sigma points
-  auto const X = h_ * matrixSquareRoot(state_cov_);
-  auto const W = h_ * matrixSquareRoot(Q);
+  auto const X = (h_ * matrixSquareRoot(state_cov_)).eval();
+  auto const W = (h_ * matrixSquareRoot(Q)).eval();
   auto const weights = generateWeights(L);
   auto const wm0 = weights[0], wm1 = weights[1], wc1 = weights[2],
              wc2 = weights[3];
@@ -309,7 +309,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   constexpr unsigned int L = State::tangent_dim_;
 
   // Generate sigma points
-  auto const X = h_ * matrixSquareRoot(state_cov_);
+  auto const X = (h_ * matrixSquareRoot(state_cov_)).eval();
   auto const weights = generateWeights(L);
   auto const wm0 = weights[0], wm1 = weights[1], wc1 = weights[2],
              wc2 = weights[3];
@@ -410,7 +410,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   }
 
   // Compute the mean and move the covariance to be around the new mean
-  auto const X_new = h_ * matrixSquareRoot(state_cov_);
+  auto const X_new = (h_ * matrixSquareRoot(state_cov_)).eval();
   if(debug)
   {
     std::cout << "X_new:\n" << X_new << "\n";
