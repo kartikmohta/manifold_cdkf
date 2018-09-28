@@ -71,6 +71,16 @@ if(BUILD_TESTS)
     target_include_directories(test_unit_vector_3d SYSTEM PUBLIC
       ${EIGEN3_INCLUDE_DIRS})
   endif()
+  add_executable(test_so2 tests/test_so2.cpp)
+  target_include_directories(test_so2 PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+  if(TARGET Eigen3::Eigen)
+    target_link_libraries(test_so2 Eigen3::Eigen)
+  else() # Older Eigen versions
+    target_include_directories(test_so2 SYSTEM PUBLIC
+      ${EIGEN3_INCLUDE_DIRS})
+  endif()
   enable_testing()
   add_test(UnitVector3D test_unit_vector_3d)
+  add_test(SO2 test_so2)
 endif()
