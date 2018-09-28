@@ -67,7 +67,7 @@ TEST_CASE("(x + d) - x == d")
   }
 }
 
-TEST_CASE("||(x + d1) - (x + d2)|| < ||d1 - d2||")
+TEST_CASE("||(x + d1) - (x + d2)|| <= ||d1 - d2||")
 {
   for(int i = 0; i < 1000; ++i)
   {
