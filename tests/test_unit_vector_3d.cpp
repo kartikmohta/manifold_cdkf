@@ -12,27 +12,27 @@ int main(int argc, char *argv[])
   return res;
 }
 
-using Scalar_t = double;
+using Scalar = double;
 
 template <int N>
-using Vec = Eigen::Matrix<Scalar_t, N, 1>;
+using Vec = Eigen::Matrix<Scalar, N, 1>;
 
 static auto const vx = Vec<3>::UnitX().eval();
 static auto const vy = Vec<3>::UnitY().eval();
 static auto const vz = Vec<3>::UnitZ().eval();
-static auto const elem_xp = UnitVector3DElement<Scalar_t>(vx);
-static auto const elem_xn = UnitVector3DElement<Scalar_t>(-vx);
-static auto const elem_yp = UnitVector3DElement<Scalar_t>(vy);
-static auto const elem_yn = UnitVector3DElement<Scalar_t>(-vy);
-static auto const elem_zp = UnitVector3DElement<Scalar_t>(vz);
-static auto const elem_zn = UnitVector3DElement<Scalar_t>(-vz);
+static auto const elem_xp = UnitVector3DElement<Scalar>(vx);
+static auto const elem_xn = UnitVector3DElement<Scalar>(-vx);
+static auto const elem_yp = UnitVector3DElement<Scalar>(vy);
+static auto const elem_yn = UnitVector3DElement<Scalar>(-vy);
+static auto const elem_zp = UnitVector3DElement<Scalar>(vz);
+static auto const elem_zn = UnitVector3DElement<Scalar>(-vz);
 
 TEST_CASE("x + (y - x) == y")
 {
   for(int i = 0; i < 1000; ++i)
   {
     auto const v_random = Vec<3>::Random().normalized();
-    auto const elem_random = UnitVector3DElement<Scalar_t>(v_random);
+    auto const elem_random = UnitVector3DElement<Scalar>(v_random);
 
     CHECK((elem_random + (elem_xn - elem_random)).getValue().isApprox(elem_xn.getValue()));
     CHECK((elem_random + (elem_yn - elem_random)).getValue().isApprox(elem_yn.getValue()));
@@ -54,8 +54,8 @@ TEST_CASE("(x + d) - x == d")
   for(int i = 0; i < 1000; ++i)
   {
     auto const v_random = Vec<3>::Random().normalized();
-    auto const elem_random = UnitVector3DElement<Scalar_t>(v_random);
-    auto const d = UnitVector3DElement<Scalar_t>::TangentVec::Random().eval();
+    auto const elem_random = UnitVector3DElement<Scalar>(v_random);
+    auto const d = UnitVector3DElement<Scalar>::TangentVec::Random().eval();
 
     CHECK(((elem_xp + d) - elem_xp).isApprox(d));
     CHECK(((elem_yp + d) - elem_yp).isApprox(d));
@@ -72,9 +72,9 @@ TEST_CASE("||(x + d1) - (x + d2)|| <= ||d1 - d2||")
   for(int i = 0; i < 1000; ++i)
   {
     auto const v_random = Vec<3>::Random().normalized();
-    auto const elem_random = UnitVector3DElement<Scalar_t>(v_random);
-    auto const d1 = UnitVector3DElement<Scalar_t>::TangentVec::Random().eval();
-    auto const d2 = UnitVector3DElement<Scalar_t>::TangentVec::Random().eval();
+    auto const elem_random = UnitVector3DElement<Scalar>(v_random);
+    auto const d1 = UnitVector3DElement<Scalar>::TangentVec::Random().eval();
+    auto const d2 = UnitVector3DElement<Scalar>::TangentVec::Random().eval();
 
     CHECK(((elem_random + d1) - (elem_random + -d1)).norm() <= doctest::Approx((d1 - -d1).norm()));
     CHECK(((elem_random + d2) - (elem_random + -d2)).norm() <= doctest::Approx((d2 - -d2).norm()));

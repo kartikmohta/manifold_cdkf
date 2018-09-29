@@ -5,19 +5,19 @@
 #include "manifold_cdkf/manifold_cdkf.hpp"
 #include "manifold_cdkf/measurement_funcs.hpp"
 
-using Scalar_t = double;
+using Scalar = double;
 
-using State = PoseVelElement<Scalar_t>;
+using State = PoseVelElement<Scalar>;
 using StateCov =
-    Eigen::Matrix<State::Scalar_t, State::tangent_dim_, State::tangent_dim_>;
+    Eigen::Matrix<State::Scalar, State::tangent_dim_, State::tangent_dim_>;
 
 template <int N>
-using Vec = Eigen::Matrix<State::Scalar_t, N, 1>;
+using Vec = Eigen::Matrix<State::Scalar, N, 1>;
 
 template <int N>
-using SquareMat = Eigen::Matrix<State::Scalar_t, N, N>;
+using SquareMat = Eigen::Matrix<State::Scalar, N, N>;
 
-using Pose = PoseElement<Scalar_t>;
+using Pose = PoseElement<Scalar>;
 
 static State processModelConstantVelocity(State const &x, Vec<0> const &u,
                                           Vec<3> const &w, double dt)
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   {
     auto const new_position = Vec<3>{1, 2, 3};
     auto const new_orientation =
-        State::Quat{Eigen::AngleAxis<Scalar_t>(M_PI / 4, Vec<3>::UnitX())};
+        State::Quat{Eigen::AngleAxis<Scalar>(M_PI / 4, Vec<3>::UnitX())};
     auto const z = Pose{new_position, new_orientation};
     auto const R = SquareMat<z.tangent_dim_>::Identity().eval();
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
   {
     auto const new_position = Vec<3>{2, 3, 1};
     auto const new_orientation =
-        State::Quat{Eigen::AngleAxis<Scalar_t>(M_PI / 2, Vec<3>::UnitX())};
+        State::Quat{Eigen::AngleAxis<Scalar>(M_PI / 2, Vec<3>::UnitX())};
     auto z = Pose{new_position, new_orientation};
     auto const R = SquareMat<z.tangent_dim_>::Zero().eval();
 

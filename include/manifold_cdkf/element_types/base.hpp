@@ -2,11 +2,11 @@
 
 #include <Eigen/Core>
 
-template <typename Derived, typename Scalar, int tangent_dim>
+template <typename Derived, typename Scalar_t, int tangent_dim>
 class ManifoldElement
 {
  public:
-  using Scalar_t = Scalar;
+  using Scalar = Scalar_t;
   using TangentVec = Eigen::Matrix<Scalar, tangent_dim, 1>;
 
   ManifoldElement() = default;

@@ -8,7 +8,7 @@ template <typename State, typename Input, typename ProcessNoiseVec>
 class ManifoldCDKF
 {
  public:
-  using Scalar = typename State::Scalar_t;
+  using Scalar = typename State::Scalar;
 
   template <int N>
   using Vec = Eigen::Matrix<Scalar, N, 1>;

@@ -6,7 +6,7 @@ template <typename State, typename Input, typename ProcessNoiseVec>
 State ProcessModelIMU(const State &state, const Input &u,
                       const ProcessNoiseVec &w, double dt)
 {
-  using Scalar = typename State::Scalar_t;
+  using Scalar = typename State::Scalar;
   using Vec3 = typename State::template Vec<3>;
 
   Vec3 const accel_body =
