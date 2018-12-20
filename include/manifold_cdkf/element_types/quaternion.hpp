@@ -54,7 +54,11 @@ class QuaternionElement final
     if(q_vec_norm < 10 * std::numeric_limits<Scalar>::epsilon())
       return TangentVec::Zero();
     else
-      return 2 * std::atan2(q_vec_norm, q.w()) * q.vec() / q_vec_norm;
+    {
+      const Scalar sign = (q.w() >= 0) ? 1 : -1;
+      return 2 * std::atan2(q_vec_norm, sign * q.w()) * sign * q.vec() /
+             q_vec_norm;
+    }
   }
 
   static Quat vec_to_quat(const TangentVec &vec)
