@@ -24,7 +24,7 @@ TEST_CASE("x + (y - x) == y")
   {
     auto const x = SO2Element<Scalar>(-dis(gen));
     auto const y = SO2Element<Scalar>(-dis(gen));
-    FAST_CHECK_EQ((x + (y - x)).getValue(), doctest::Approx(y.getValue()));
+    CHECK_EQ((x + (y - x)).getValue(), doctest::Approx(y.getValue()));
   }
 }
 
@@ -35,7 +35,7 @@ TEST_CASE("(x + d) - x == d")
     auto const x = SO2Element<Scalar>(-dis(gen));
     auto const d = SO2Element<Scalar>::TangentVec(-dis(gen));
 
-    FAST_CHECK_EQ(((x + d) - x).value(), doctest::Approx(d.value()));
+    CHECK_EQ(((x + d) - x).value(), doctest::Approx(d.value()));
   }
 }
 
@@ -47,6 +47,6 @@ TEST_CASE("||(x + d1) - (x + d2)|| <= ||d1 - d2||")
     auto const d1 = SO2Element<Scalar>::TangentVec(-dis(gen));
     auto const d2 = SO2Element<Scalar>::TangentVec(-dis(gen));
 
-    FAST_CHECK_LE(((x + d1) - (x + d2)).norm(), doctest::Approx((d1 - d2).norm()));
+    CHECK_LE(((x + d1) - (x + d2)).norm(), doctest::Approx((d1 - d2).norm()));
   }
 }

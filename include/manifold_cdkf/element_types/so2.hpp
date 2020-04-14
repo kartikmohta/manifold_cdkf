@@ -41,5 +41,4 @@ class SO2Element final : public ManifoldElement<SO2Element<Scalar>, Scalar, 1>
   }
 
   Scalar angle_;
-  static constexpr Scalar pi = M_PI;
 };
