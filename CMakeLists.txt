@@ -51,7 +51,7 @@ install(DIRECTORY "include/${PROJECT_NAME}"
 include(cmake/GenerateAndInstallConfig.cmake)
 generate_and_install_config_file(
   INCLUDE_DIRS "include"
-  LIBRARIES
+  INTERFACE_LIBRARIES manifold_cdkf
   DEPS Eigen3
   DEPS_INCLUDE_DIRS EIGEN3
   DEPS_LIBRARIES

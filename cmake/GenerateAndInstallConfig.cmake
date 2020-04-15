@@ -1,5 +1,5 @@
 function(generate_and_install_config_file)
-  cmake_parse_arguments(config "" "" "INCLUDE_DIRS;LIBRARIES;DEPS;DEPS_INCLUDE_DIRS;DEPS_LIBRARIES" ${ARGN})
+  cmake_parse_arguments(config "" "" "INCLUDE_DIRS;LIBRARIES;INTERFACE_LIBRARIES;DEPS;DEPS_INCLUDE_DIRS;DEPS_LIBRARIES" ${ARGN})
 
   # Configuration (https://github.com/forexample/package-example)
   set(config_install_dir "share/${PROJECT_NAME}/cmake")
@@ -33,6 +33,9 @@ function(generate_and_install_config_file)
     list(REMOVE_DUPLICATES PROJECT_INCLUDE_DIRS)
   endif()
 
+  foreach(lib ${config_INTERFACE_LIBRARIES})
+    list(APPEND PROJECT_LIBRARIES ${lib})
+  endforeach()
   foreach(lib ${config_LIBRARIES})
     if(IS_ABSOLUTE ${lib} AND EXISTS ${lib})
       set(CUR_LIB ${lib})
@@ -49,7 +52,6 @@ function(generate_and_install_config_file)
   if(${PROJECT_LIBRARIES_LENGTH})
     list(REMOVE_DUPLICATES PROJECT_LIBRARIES)
   endif()
-  #configure_file("cmake/Config.cmake.in" "${project_config}" @ONLY)
 
   configure_package_config_file(
     "cmake/Config.cmake.in"
