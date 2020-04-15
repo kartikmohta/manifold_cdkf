@@ -2,6 +2,7 @@
 
 #include <Eigen/Cholesky>
 #include <Eigen/Core>
+#include <Eigen/Eigenvalues>
 #include <iostream>
 
 template <typename State, typename Input, typename ProcessNoiseVec>
@@ -28,7 +29,9 @@ class ManifoldCDKF
         process_model_{process_model}
   {
     if(!process_model_)
+    {
       throw std::invalid_argument("Invalid process_model");
+    }
   }
 
   /// Get current state
@@ -188,23 +191,41 @@ class ManifoldCDKF
   {
     // Try LLT first
     {
-      Eigen::LLT<typename Derived::PlainObject> cov_chol{mat};
+      Eigen::LLT<typename Derived::PlainObject> const cov_chol{mat};
       if(cov_chol.info() == Eigen::Success)
+      {
         return cov_chol.matrixL();
+      }
     }
     // If not successful, try LDLT
     {
-      Eigen::LDLT<typename Derived::PlainObject> cov_chol{mat};
+      Eigen::LDLT<typename Derived::PlainObject> const cov_chol{mat};
       if(cov_chol.info() == Eigen::Success)
       {
         typename Derived::PlainObject const L = cov_chol.matrixL();
-        auto const P = cov_chol.transpositionsP();
-        auto const D2 = cov_chol.vectorD().array().sqrt().matrix().asDiagonal();
-        return P.transpose() * L * D2;
+        auto const &P = cov_chol.transpositionsP();
+        auto const D = cov_chol.vectorD().array();
+        if((D >= 0).all())
+        {
+          auto const D2 = D.sqrt().matrix().asDiagonal();
+          return P.transpose() * L * D2;
+        }
       }
     }
-    // Else give up
-    return Derived::PlainObject::Zero(mat.rows(), mat.cols());
+    // If not successful, try eigen-decomposition with slightly inflated
+    // eigenvalues
+    {
+      Eigen::SelfAdjointEigenSolver<typename Derived::PlainObject> const cov_es{
+          mat};
+      auto eigvals = cov_es.eigenvalues().array().eval();
+      auto const lowest_eval = eigvals(0);
+      if(lowest_eval < 0)
+      {
+        eigvals -= lowest_eval;
+      }
+      return cov_es.eigenvectors() * eigvals.sqrt().matrix().asDiagonal() *
+             cov_es.eigenvectors().transpose();
+    }
   }
 
   /// State
@@ -234,7 +255,9 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
                                                              bool debug)
 {
   if(dt < 0)
+  {
     return false;
+  }
 
   if(debug) // For debugging
   {
