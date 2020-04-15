@@ -4,6 +4,7 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 #include <iostream>
+#include <vector>
 
 template <typename State, typename Input, typename ProcessNoiseVec>
 class ManifoldCDKF
@@ -19,11 +20,11 @@ class ManifoldCDKF
 
   using StateCov = Mat<State::tangent_dim_, State::tangent_dim_>;
 
-  using ProcessModel = std::function<State(
+  using ProcessModelFunc = std::function<State(
       State const &state, Input const &u, ProcessNoiseVec const &w, Scalar dt)>;
 
   ManifoldCDKF(State const &state, StateCov const &state_covariance,
-               ProcessModel const &process_model)
+               ProcessModelFunc const &process_model)
       : state_{state},
         state_cov_{state_covariance},
         process_model_{process_model}
@@ -71,9 +72,7 @@ class ManifoldCDKF
    *
    * @return True if the process update was successful else false
    */
-  template <typename InputCov,
-            typename =
-                std::enable_if_t<InputCov::SizeAtCompileTime != Eigen::Dynamic>>
+  template <typename InputCov>
   bool processUpdate(Scalar const dt, Input const &u, InputCov const &Q,
                      bool debug = false);
 
@@ -89,10 +88,8 @@ class ManifoldCDKF
    *
    * @return True if the measurement update was successful else false
    */
-  template <
-      typename MeasurementFunc, typename MeasurementType, typename MeasCovType,
-      typename =
-          std::enable_if_t<MeasCovType::SizeAtCompileTime != Eigen::Dynamic>>
+  template <typename MeasurementFunc, typename MeasurementType,
+            typename MeasCovType>
   bool measurementUpdate(MeasurementFunc const &measurement_func,
                          MeasurementType const &z, MeasCovType const &R,
                          bool debug = false);
@@ -119,30 +116,6 @@ class ManifoldCDKF
     return {wm0, wm1, wc1, wc2};
   }
 
-#if 0
-  /**
-   * Generate the sigma points given the noise covariance matrix
-   *
-   * @param[in] P Noise covariance matrix used for generating the sigma points
-   */
-  template <typename T>
-  std::enable_if_t<T::RowsAtCompileTime != Eigen::Dynamic,
-                   Mat<T::RowsAtCompileTime, 2 * T::RowsAtCompileTime + 1>>
-  generateSigmaPoints(T const &P)
-  {
-    constexpr int L = T::RowsAtCompileTime;
-
-    // Matrix square root
-    auto const sqrtP = matrixSquareRoot(P);
-
-    Mat<L, 2 * L + 1> Xaa;
-    Xaa.col(0).setZero();
-    Xaa.template block<L, L>(0, 1) = h_ * sqrtP;
-    Xaa.template block<L, L>(0, L + 1) = -h_ * sqrtP;
-    return Xaa;
-  }
-#endif
-
   /**
    * Compute the mean of the sigma points
    *
@@ -152,9 +125,10 @@ class ManifoldCDKF
    *
    * @return Mean of the sigma points
    */
-  template <typename T, size_t N>
-  T meanOfSigmaPoints(std::array<T, N> const &sigma_points, Scalar wm0,
-                      Scalar wm1) const
+  template <typename T>
+  T meanOfSigmaPoints(
+      std::vector<T, Eigen::aligned_allocator<T>> const &sigma_points,
+      Scalar wm0, Scalar wm1) const
   {
     T mean = sigma_points[0];
     unsigned int iterations = 0;
@@ -162,7 +136,7 @@ class ManifoldCDKF
     do
     {
       dx = wm0 * (sigma_points[0] - mean);
-      for(unsigned int i = 1; i < N; ++i)
+      for(unsigned int i = 1; i < sigma_points.size(); ++i)
       {
         dx += wm1 * (sigma_points[i] - mean);
       }
@@ -235,7 +209,7 @@ class ManifoldCDKF
   StateCov state_cov_;
 
   /// Process model
-  ProcessModel const process_model_;
+  ProcessModelFunc const process_model_;
 
   /// CDKF Parameter
   Scalar h_ = std::sqrt(Scalar(3));
@@ -248,7 +222,7 @@ class ManifoldCDKF
 };
 
 template <typename State, typename Input, typename ProcNoiseVec>
-template <typename InputCov, typename>
+template <typename InputCov>
 bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
                                                              Input const &u,
                                                              InputCov const &Q,
@@ -267,8 +241,8 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
     std::cout << "state_cov:\n" << state_cov_ << std::endl;
   }
 
-  constexpr unsigned int proc_noise_count = InputCov::RowsAtCompileTime;
-  constexpr unsigned int L = State::tangent_dim_ + proc_noise_count;
+  auto const proc_noise_count = static_cast<unsigned int>(Q.rows());
+  auto const L = State::tangent_dim_ + proc_noise_count;
 
   // Generate sigma points
   auto const X = (h_ * matrixSquareRoot(state_cov_)).eval();
@@ -278,7 +252,7 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
              wc2 = weights[3];
   // auto const [wm0, wm1, wc1, wc2] = generateWeights(L); // In C++17
 
-  std::array<State, 2 * L + 1> Xa;
+  std::vector<State, Eigen::aligned_allocator<State>> Xa(2 * L + 1);
 
   // Apply process model
   Xa[0] = process_model_(state_, u, ProcNoiseVec::Zero(), dt);
@@ -318,7 +292,7 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
 
 template <typename State, typename Input, typename ProcessNoiseVec>
 template <typename MeasurementFunc, typename MeasurementType,
-          typename MeasCovType, typename>
+          typename MeasCovType>
 bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
     MeasurementFunc const &measurement_func, MeasurementType const &z,
     MeasCovType const &R, bool debug)
@@ -345,7 +319,8 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   }
 
   // Apply measurement model
-  std::array<MeasurementType, 2 * L + 1> Zaa;
+  std::vector<MeasurementType, Eigen::aligned_allocator<MeasurementType>> Zaa(
+      2 * L + 1);
 
   Zaa[0] = measurement_func(state_);
   for(unsigned int k = 1; k <= L; k++)
@@ -364,7 +339,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   auto const z_pred = meanOfSigmaPoints(Zaa, wm0, wm1);
 
   // Covariance
-  auto Pzz = MeasCovType::Zero().eval();
+  auto Pzz = MeasCovType::Zero(R.rows(), R.cols()).eval();
   auto Pxz =
       Mat<State::tangent_dim_, MeasurementType::tangent_dim_>::Zero().eval();
   for(unsigned int k = 1; k <= L; k++)
@@ -439,7 +414,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
     std::cout << "X_new:\n" << X_new << "\n";
   }
 
-  std::array<State, 2 * L + 1> Xa;
+  std::vector<State, Eigen::aligned_allocator<State>> Xa(2 * L + 1);
   Xa[0] = state_ + dx;
   for(unsigned int k = 1; k <= L; k++)
   {
