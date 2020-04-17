@@ -315,7 +315,7 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   if(debug)
   {
     std::cout << "Pa:\n" << state_cov_ << std::endl;
-    std::cout << "X:\n" << X.template leftCols<L + 1>() << std::endl;
+    std::cout << "X:\n" << X << std::endl;
   }
 
   // Apply measurement model
