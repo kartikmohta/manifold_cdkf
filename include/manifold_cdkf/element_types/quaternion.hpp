@@ -19,7 +19,7 @@ class QuaternionElement final
 
   QuaternionElement(const Quat &q = Quat::Identity()) : quat_{q} {}
 
-  Quat getValue() const { return quat_; }
+  Quat const &getValue() const { return quat_; }
   void setValue(const Quat &q) { quat_ = q; }
 
   QuaternionElement operator+(const TangentVec &diff) const override

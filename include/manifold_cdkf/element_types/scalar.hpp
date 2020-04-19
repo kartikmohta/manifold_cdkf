@@ -13,7 +13,7 @@ class ScalarElement final
 
   ScalarElement(const Scalar &s = Scalar(0)) { setValue(s); }
 
-  Scalar getValue() const { return scalar_; }
+  Scalar const &getValue() const { return scalar_; }
   void setValue(const Scalar &s) { scalar_ = s; }
 
   ScalarElement operator+(const TangentVec &diff) const override

@@ -13,7 +13,7 @@ class SO2Element final : public ManifoldElement<SO2Element<Scalar>, Scalar, 1>
   {
   }
 
-  Scalar getValue() const { return angle_; }
+  Scalar const &getValue() const { return angle_; }
   void setValue(const Scalar &angle) { angle_ = normalize_angle(angle); }
 
   SO2Element operator+(const TangentVec &diff) const override

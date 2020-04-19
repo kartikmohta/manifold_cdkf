@@ -18,7 +18,7 @@ class UnitVector3DElement final
     vec_ = v.normalized();
   }
 
-  UnitVec getValue() const { return vec_; }
+  UnitVec const &getValue() const { return vec_; }
   void setValue(const UnitVec &v) { vec_ = v.normalized(); }
 
   UnitVector3DElement operator+(const TangentVec &diff) const override

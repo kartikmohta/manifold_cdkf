@@ -15,7 +15,7 @@ class VectorElement final
 
   VectorElement(const Vec &v = Vec::Zero()) : vec_{v} {}
 
-  Vec getValue() const { return vec_; }
+  Vec const &getValue() const { return vec_; }
   void setValue(const Vec &v) { vec_ = v; }
 
   VectorElement operator+(const TangentVec &diff) const override

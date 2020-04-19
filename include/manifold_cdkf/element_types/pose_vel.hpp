@@ -31,13 +31,13 @@ class PoseVelElement final : public CompoundElement<VectorElement<Scalar, 3>,
   {
   }
 
-  Vec<3> getPosition() const { return Base::template getValue<0>(); }
+  Vec<3> const &getPosition() const { return Base::template getValue<0>(); }
   void setPosition(const Vec<3> &v) { Base::template setValue<0>(v); }
 
-  Quat getOrientation() const { return Base::template getValue<1>(); }
+  Quat const &getOrientation() const { return Base::template getValue<1>(); }
   void setOrientation(const Quat &q) { Base::template setValue<1>(q); }
 
-  Vec<3> getVelocity() const { return Base::template getValue<2>(); }
+  Vec<3> const &getVelocity() const { return Base::template getValue<2>(); }
   void setVelocity(const Vec<3> &v) { Base::template setValue<2>(v); }
 
   friend std::ostream &operator<<(std::ostream &stream, PoseVelElement const &e)

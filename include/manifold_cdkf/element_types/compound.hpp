@@ -41,7 +41,7 @@ class CompoundElement
   }
 
   template <unsigned int N>
-  typename ArgType<N>::ElementType getValue() const
+  typename ArgType<N>::ElementType const &getValue() const
   {
     return std::get<N>(t_).getValue();
   }

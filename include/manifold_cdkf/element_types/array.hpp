@@ -15,12 +15,12 @@ class ArrayElement : public ManifoldElement<ArrayElement<Scalar, T, N>, Scalar,
   explicit ArrayElement(std::array<T, N> const &array) : array_{array} {}
 
   template <unsigned int M>
-  typename T::ElementType getValue() const
+  typename T::ElementType const &getValue() const
   {
     return array_[M].getValue();
   }
 
-  typename T::ElementType getValue(unsigned int M) const
+  typename T::ElementType const &getValue(unsigned int M) const
   {
     return array_[M].getValue();
   }
