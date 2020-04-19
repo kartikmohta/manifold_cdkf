@@ -1,22 +1,21 @@
 #pragma once
 
 #include "compound.hpp"
-#include "vector.hpp"
 #include "quaternion.hpp"
+#include "vector.hpp"
 
 /**
  * CompoundElement containing [Position, Orientation, Linear Velocity]
  */
 template <typename Scalar>
-class PoseVelElement final
-    : public CompoundElement<Scalar, VectorElement<Scalar, 3>,
-                             QuaternionElement<Scalar>,
-                             VectorElement<Scalar, 3>>
+class PoseVelElement final : public CompoundElement<VectorElement<Scalar, 3>,
+                                                    QuaternionElement<Scalar>,
+                                                    VectorElement<Scalar, 3>>
 {
  public:
   using Base =
-      CompoundElement<Scalar, VectorElement<Scalar, 3>,
-                      QuaternionElement<Scalar>, VectorElement<Scalar, 3>>;
+      CompoundElement<VectorElement<Scalar, 3>, QuaternionElement<Scalar>,
+                      VectorElement<Scalar, 3>>;
   using TangentVec = typename Base::TangentVec;
 
   template <int N>

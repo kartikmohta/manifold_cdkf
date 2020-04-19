@@ -8,13 +8,12 @@
  * CompoundElement containing [Position, Orientation]
  */
 template <typename Scalar>
-class PoseElement final
-    : public CompoundElement<Scalar, VectorElement<Scalar, 3>,
-                             QuaternionElement<Scalar>>
+class PoseElement final : public CompoundElement<VectorElement<Scalar, 3>,
+                                                 QuaternionElement<Scalar>>
 {
  public:
-  using Base = CompoundElement<Scalar, VectorElement<Scalar, 3>,
-                               QuaternionElement<Scalar>>;
+  using Base =
+      CompoundElement<VectorElement<Scalar, 3>, QuaternionElement<Scalar>>;
   using TangentVec = typename Base::TangentVec;
 
   template <int N>

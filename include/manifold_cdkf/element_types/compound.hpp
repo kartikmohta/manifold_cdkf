@@ -2,6 +2,8 @@
 
 #include "base.hpp"
 
+namespace
+{
 template <typename T>
 constexpr T templateSum(T v)
 {
@@ -14,48 +16,50 @@ constexpr T templateSum(T first, Ts... args)
   return first + templateSum(args...);
 }
 
-template <typename Scalar, typename... Args>
+} // namespace
+
+template <typename Arg0, typename... Args>
 class CompoundElement
-    : public ManifoldElement<CompoundElement<Scalar, Args...>, Scalar,
-                             templateSum(Args::tangent_dim_...)>
+    : public ManifoldElement<
+          CompoundElement<Arg0, Args...>, typename Arg0::Scalar,
+          templateSum(Arg0::tangent_dim_, Args::tangent_dim_...)>
 {
  private:
-  template <typename... Ts>
-  struct TypeList
-  {
-    template <std::size_t N>
-    using type = typename std::tuple_element<N, std::tuple<Ts...>>::type;
-  };
+  template <std::size_t N>
+  using ArgType = typename std::tuple_element_t<N, std::tuple<Arg0, Args...>>;
 
  public:
-  using Base = ManifoldElement<CompoundElement<Scalar, Args...>, Scalar,
-                               templateSum(Args::tangent_dim_...)>;
+  using Base =
+      ManifoldElement<CompoundElement<Arg0, Args...>, typename Arg0::Scalar,
+                      templateSum(Arg0::tangent_dim_, Args::tangent_dim_...)>;
   using TangentVec = typename Base::TangentVec;
 
   CompoundElement() = default;
-  explicit CompoundElement(Args const &... vs) : t_{std::make_tuple(vs...)} {}
+  explicit CompoundElement(Arg0 const &v, Args const &... vs)
+      : t_{std::make_tuple(v, vs...)}
+  {
+  }
 
   template <unsigned int N>
-  typename TypeList<Args...>::template type<N>::ElementType getValue() const
+  typename ArgType<N>::ElementType getValue() const
   {
     return std::get<N>(t_).getValue();
   }
 
   template <unsigned int N>
-  void setValue(
-      typename TypeList<Args...>::template type<N>::ElementType const &v)
+  void setValue(typename ArgType<N>::ElementType const &v)
   {
     std::get<N>(t_).setValue(v);
   }
 
   template <unsigned int N>
-  typename TypeList<Args...>::template type<N> get() const
+  const ArgType<N> &get() const
   {
     return std::get<N>(t_);
   }
 
   template <unsigned int N>
-  void set(typename TypeList<Args...>::template type<N> const &v)
+  void set(ArgType<N> const &v)
   {
     std::get<N>(t_) = v;
   }
@@ -77,7 +81,7 @@ class CompoundElement
   friend std::ostream &operator<<(std::ostream &stream,
                                   CompoundElement const &element)
   {
-    stream << "CompoundElement with " << sizeof...(Args) << " elements"
+    stream << "CompoundElement with " << 1 + sizeof...(Args) << " elements"
            << std::endl;
     element.print(stream);
     return stream;
@@ -89,11 +93,10 @@ class CompoundElement
   // All these functions are called sort of recursively for each tuple element
 
   template <size_t i = 0, size_t segment_begin_idx = 0>
-  std::enable_if_t<i < sizeof...(Args)> add(TangentVec const &diff,
-                                            CompoundElement &p) const
+  std::enable_if_t<(i <= sizeof...(Args))> add(TangentVec const &diff,
+                                               CompoundElement &p) const
   {
-    constexpr size_t tangent_dim =
-        TypeList<Args...>::template type<i>::tangent_dim_;
+    constexpr size_t tangent_dim = ArgType<i>::tangent_dim_;
 
     std::get<i>(p.t_) =
         std::get<i>(t_) + diff.template segment<tangent_dim>(segment_begin_idx);
@@ -101,17 +104,16 @@ class CompoundElement
     add<i + 1, segment_begin_idx + tangent_dim>(diff, p);
   }
   template <size_t i = 0, size_t segment_begin_idx = 0>
-  std::enable_if_t<i >= sizeof...(Args)> add(TangentVec const &,
-                                             CompoundElement &) const
+  std::enable_if_t<(i > sizeof...(Args))> add(TangentVec const &,
+                                              CompoundElement &) const
   {
   }
 
   template <size_t i = 0, size_t segment_begin_idx = 0>
-  std::enable_if_t<i < sizeof...(Args)> subtract(CompoundElement const &p,
-                                                 TangentVec &diff) const
+  std::enable_if_t<(i <= sizeof...(Args))> subtract(CompoundElement const &p,
+                                                    TangentVec &diff) const
   {
-    constexpr size_t tangent_dim =
-        TypeList<Args...>::template type<i>::tangent_dim_;
+    constexpr size_t tangent_dim = ArgType<i>::tangent_dim_;
 
     diff.template segment<tangent_dim>(segment_begin_idx) =
         std::get<i>(t_) - std::get<i>(p.t_);
@@ -119,21 +121,21 @@ class CompoundElement
     subtract<i + 1, segment_begin_idx + tangent_dim>(p, diff);
   }
   template <size_t i = 0, size_t segment_begin_idx = 0>
-  std::enable_if_t<i >= sizeof...(Args)> subtract(CompoundElement const &,
-                                                  TangentVec &) const
+  std::enable_if_t<(i > sizeof...(Args))> subtract(CompoundElement const &,
+                                                   TangentVec &) const
   {
   }
 
   template <size_t i = 0>
-  std::enable_if_t<i < sizeof...(Args)> print(std::ostream &stream) const
+  std::enable_if_t<(i <= sizeof...(Args))> print(std::ostream &stream) const
   {
     stream << "- Element " << i << ": " << std::get<i>(t_) << std::endl;
     print<i + 1>(stream);
   }
   template <size_t i = 0>
-  std::enable_if_t<i >= sizeof...(Args)> print(std::ostream &) const
+  std::enable_if_t<(i > sizeof...(Args))> print(std::ostream &) const
   {
   }
 
-  std::tuple<Args...> t_;
+  std::tuple<Arg0, Args...> t_;
 };
