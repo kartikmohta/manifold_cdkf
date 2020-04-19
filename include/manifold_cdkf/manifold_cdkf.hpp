@@ -132,7 +132,7 @@ class ManifoldCDKF
   {
     T mean = sigma_points[0];
     unsigned int iterations = 0;
-    Vec<T::tangent_dim_> dx;
+    typename T::TangentVec dx;
     do
     {
       dx = wm0 * (sigma_points[0] - mean);
@@ -215,10 +215,11 @@ class ManifoldCDKF
   Scalar h_ = std::sqrt(Scalar(3));
 
   /// Threshold for change in state during sigma point mean computation
-  Scalar sigma_points_mean_threshold_ = Scalar(1e-6);
+  Scalar sigma_points_mean_threshold_ =
+      10 * std::numeric_limits<Scalar>::epsilon();
 
   /// Maximum number of iterations for sigma point mean computation
-  unsigned int sigma_points_mean_max_iterations_ = 5;
+  unsigned int sigma_points_mean_max_iterations_ = 10;
 };
 
 template <typename State, typename Input, typename ProcNoiseVec>
