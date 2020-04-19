@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>manifold_cdkf</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>The manifold_cdkf package</description>
 
   <maintainer email="kartikmohta@gmail.com">Kartik Mohta</maintainer>
