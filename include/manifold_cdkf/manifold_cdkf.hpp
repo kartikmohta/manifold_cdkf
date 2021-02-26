@@ -278,8 +278,8 @@ bool ManifoldCDKF<State, Input, ProcNoiseVec>::processUpdate(Scalar const dt,
   {
     auto const x1 = Xa[k] - Xa[0];
     auto const x2 = Xa[L + k] - Xa[0];
-    auto const d1 = x1 - x2;
-    auto const d2 = x1 + x2;
+    auto const d1 = (x1 - x2).eval();
+    auto const d2 = (x1 + x2).eval();
     state_cov_ += wc1 * d1 * d1.transpose() + wc2 * d2 * d2.transpose();
   }
 
@@ -347,8 +347,8 @@ bool ManifoldCDKF<State, Input, ProcessNoiseVec>::measurementUpdate(
   {
     auto const z1 = Zaa[k] - Zaa[0];
     auto const z2 = Zaa[L + k] - Zaa[0];
-    auto const dz1 = z1 - z2;
-    auto const dz2 = z1 + z2;
+    auto const dz1 = (z1 - z2).eval();
+    auto const dz2 = (z1 + z2).eval();
     Pzz += wc1 * dz1 * dz1.transpose() + wc2 * dz2 * dz2.transpose();
     Pxz += wm1 * X.col(k - 1) * dz1.transpose();
   }
